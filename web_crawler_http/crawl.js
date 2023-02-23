@@ -1,6 +1,7 @@
 const {JSDOM} = require('jsdom'); // Access DOM APIs
 
 
+// Recursively parse through each page associated with base URL
 async function crawlPage(baseURL, currentURL, pages) {
     const baseURLObj = new URL(baseURL);
     const currentURLObj = new URL(currentURL);
