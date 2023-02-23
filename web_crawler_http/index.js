@@ -1,4 +1,5 @@
 const {crawlPage} = require('./crawl.js')
+const {printReport} = require('./report.js')
 
 // Crawl through a website and collect all links associated with the base URL
 async function main() {
@@ -19,9 +20,7 @@ async function main() {
     console.log(`Starting web crawler on: ${baseURL}`)
     const newPages = await crawlPage(baseURL, baseURL, {})
 
-    for (const page of Object.entries(newPages)) {
-        console.log(page)
-    }
+    printReport(newPages)
  }
 
 main()
