@@ -1,7 +1,27 @@
 const {JSDOM} = require('jsdom'); // Access DOM APIs
 
 
-async function crawlPage(currentURL) {
+async function crawlPage(baseURL, currentURL, pages) {
+    const baseURLObj = new URL(baseURL);
+    const currentURLObj = new URL(currentURL);
+
+    // Base Case
+    if (baseURLObj.hostname !== currentURLObj.hostname) {
+        return pages
+    }
+
+    const normalizeCurrentURL = normalizeURL(currentURL)
+
+    // Base Case
+    // If page is already viewed, increment the number of times viewed and don't repeat
+    if (pages[normalizeCurrentURL] > 0) {
+        pages[normalizeCurrentURL]++
+        return pages
+    }
+
+    // Initialize pages
+    pages[normalizeCurrentURL] = 1
+
     console.log(`Crawling: ${currentURL}`);
 
     // Fetch data from URL
@@ -10,21 +30,29 @@ async function crawlPage(currentURL) {
 
         if (resp.status > 399) {
             console.log(`Error in fetch with status: ${resp.status} on page: ${currentURL}`);
-            return
+            return pages
         }
 
         // Check that content is HTML
         const contentType = resp.headers.get("Content-type")
         if (!contentType.includes('text/html')) {
             console.log(`Not an HTML response: ${contentType}, on page: ${currentURL}`);
-            return
+            return pages
         }
 
-        console.log(await resp.text())
+        const htmlBody = await resp.text()
+
+        const nextURLs = getURLsFromHTML(htmlBody, baseURL)
+
+        for (const nextURL of nextURLs) {
+            pages = await crawlPage(baseURL, nextURL, pages)
+        }
+
     } catch (error) {
         console.log(`Error fetching: ${error.message}, on page: ${currentURL}`)
     }
-    
+
+    return pages    
 }
 
 // Get all links in HTML document,
@@ -34,9 +62,9 @@ function getURLsFromHTML(htmlBody, baseURL) {
     const dom = new JSDOM(htmlBody);
     const linkElements = dom.window.document.querySelectorAll('a')
     for (const linkElement of linkElements) {
-        console.log(linkElement.href)
+        //console.log(linkElement.href)
         if (linkElement.href.slice(0, 1) === '/') {
-            // relative
+            // relative link
             try {
                 const urlObj = new URL(`${baseURL}${linkElement.href}`) // Throw error if not valid URL
                 urls.push(urlObj.href)
@@ -46,7 +74,7 @@ function getURLsFromHTML(htmlBody, baseURL) {
             
         }
         else {
-            // absolute
+            // absolute link
             try {
                 const urlObj = new URL(linkElement.href) // Throw error if not valid URL
                 urls.push(urlObj.href)
