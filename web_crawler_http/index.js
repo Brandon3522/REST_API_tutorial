@@ -2,6 +2,7 @@ const {crawlPage} = require('./crawl.js')
 const {printReport} = require('./report.js')
 
 // Crawl through a website and collect all links associated with the base URL
+// Accepts one website passed from the command line
 async function main() {
     // Check if website is provided
     if (process.argv.length < 3) {
